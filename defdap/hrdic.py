@@ -229,7 +229,7 @@ class Map(base.Map):
             self.format, self.version, self.xdim, self.ydim, self.binning
         )
         
-    def loadCorrValData(self, fileDir, fileName, dataType=None):
+    def loadCorrValData(self, fileDir, fileName, dataType=None,dicNumber=None):
         """Load correlation value for DIC data
 
         Parameters
@@ -244,9 +244,14 @@ class Map(base.Map):
         """
         dataType = "DavisImage" if dataType is None else dataType
 
+        # include dataLoader for ncorr correlation data
+        
+        
         dataLoader = DICDataLoader()
         if dataType == "DavisImage":
             loadedData = dataLoader.loadDavisImageData(fileName, fileDir)
+        elif dataType == "ncorr":
+            loadedData = dataLoader.loadNcorrImageData(fileName,dicNumber,fileDir)
         else:
             raise Exception("No loader found for this DIC data.")
             
@@ -877,8 +882,9 @@ class Map(base.Map):
 
         elif algorithm == 'floodfill':
             # Initialise the grain map
-            self.grains = np.copy(self.boundaries)
-
+            # self.grains = np.copy(self.boundaries)
+            
+            # self.grains = np.copy(self.boundaries)
             self.grainList = []
 
             # List of points where no grain has been set yet
@@ -894,6 +900,10 @@ class Map(base.Map):
             # to a grain or ignored
             i = 0
             while found_point >= 0:
+                # copilot addition !! 
+                if next_point == -1:
+                    break  # No more points to process, exit the loop
+                
                 # Flood fill first unknown point and return grain object
                 idx = np.unravel_index(next_point, self.grains.shape)
                 currentGrain = self.floodFill(idx[1], idx[0], grainIndex,
@@ -938,8 +948,19 @@ class Map(base.Map):
                 # Find grain by masking the native ebsd grain image with
                 # selected grain from the warped dic grain image. The modal
                 # value is the EBSD grain label.
-                modeId, _ = mode(self.ebsdMap.grains[warpedDicGrains == i + 1], keepdims=False)
-                ebsd_grain_idx = modeId - 1
+                
+                # modeId, _ = mode(self.ebsdMap.grains[warpedDicGrains == i + 1])
+                # ebsd_grain_idx = modeId[0] - 1
+                
+                
+                mode_result = mode(self.ebsdMap.grains[warpedDicGrains == i + 1])
+                # ebsd_grain_idx = mode_result.mode[0] - 1  # Access the mode attribute - original
+                if isinstance(mode_result.mode, np.ndarray):
+                     ebsd_grain_idx = mode_result.mode[0] - 1  # Access the mode attribute
+                else:
+                     ebsd_grain_idx = mode_result.mode - 1  # Handle scalar case
+           
+           
                 self.ebsdGrainIds.append(ebsd_grain_idx)
                 self[i].ebsdGrainId = ebsd_grain_idx
                 self[i].ebsdGrain = self.ebsdMap[ebsd_grain_idx]
