@@ -121,7 +121,9 @@ class Map(base.Map):
         self.primaryPhaseID = 0
 
         # Use euler map for defining homologous points
+        # use ipf for homol points
         self.plotHomog = self.plotEulerMap
+        # self.plotHomog = self.plotIPFMap([0,0,1])
         self.plotDefault = self.plotEulerMap
         self.highlightAlpha = 1
 

@@ -391,6 +391,7 @@ class MapPlot(Plot):
         """
         if scale is None:
             scale = self.callingMap.scale * 1e-6
+            # scale=self.callingMap.bseScale*1e-6
         self.ax.add_artist(ScaleBar(scale))
 
     def addGrainBoundaries(self, kind="pixel", boundaries=None, colour=None, 
@@ -470,6 +471,15 @@ class MapPlot(Plot):
             boundariesCmap._init()
             boundariesCmap._lut[:, -1] = np.linspace(0, 1, boundariesCmap.N + 3)
 
+            # Check and adjust x &  y -axis limits, from co pilot
+            xlim = self.ax.get_xlim()
+            if xlim[0] == xlim[1]:
+                self.ax.set_xlim(xlim[0] - 1, xlim[1] + 1)
+                
+            ylim = self.ax.get_ylim()
+            if ylim[0] == ylim[1]:
+                self.ax.set_ylim(ylim[0] - 1, ylim[1] + 1)
+                
             img = self.ax.imshow(boundariesImage, cmap=boundariesCmap,
                                  interpolation='None', vmin=0, vmax=1)
 
@@ -684,6 +694,7 @@ class MapPlot(Plot):
                        makeInteractive=makeInteractive, **figParams)
 
         if mapData is not None:
+            # mapData=callingMap
             plot.addMap(mapData, cmap=cmap, vmin=vmin, vmax=vmax, **kwargs)
 
         if plotColourBar:

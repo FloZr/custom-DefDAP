@@ -239,7 +239,7 @@ class Map(object):
         self.profilePlot.ax.set_ylabel('Intensity')
         self.profilePlot.draw()
 
-    def setHomogPoint(self, binSize=1, points=None, **kwargs):
+    def setHomogPoint(self, binSize=1, points=None,plot_euler=None, **kwargs):
         """
         Interactive tool to set homologous points. Right-click on a point
         then click 'save point' to append to the homologous points list.
@@ -255,7 +255,12 @@ class Map(object):
 
         """
         if points is None:
-            plot = self.plotHomog(makeInteractive=True, **kwargs)
+            if plot_euler=='IPF':
+                plot=self.plotIPFMap([0,0,1],makeInteractive=True, **kwargs)
+            elif plot_euler=='BC':
+                plot = self.plotBandContrastMap(makeInteractive=True, **kwargs)
+            else: 
+                plot = self.plotHomog(makeInteractive=True, **kwargs)
             # Plot stored homogo points if there are any
             if len(self.homogPoints) > 0:
                 homogPoints = np.array(self.homogPoints) * binSize
@@ -621,7 +626,8 @@ class Map(object):
         for i, grainId in enumerate(grainIds):
             grain = self[grainId]
             grainData = grain.grainData(mapData)
-            grainAvData[i] = grainData.mean()
+            # grainAvData[i] = grainData.mean() 
+            grainAvData[i] = np.nanmean(grainData) #to avoid NaN values after filtering out data !!
 
         return grainAvData
 

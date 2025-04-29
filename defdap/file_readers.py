@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 import pathlib
 import re
-
+import h5py
 from typing import TextIO, Dict, List, Callable, Any, Type, Optional
 
 from defdap.crystal import Phase
@@ -166,7 +166,7 @@ class OxfordTextLoader(EBSDDataLoader):
             'Euler2': ('phi', 'float32'),
             'Euler3': ('ph2', 'float32'),
             'MAD': ('MAD', 'float32'),  # Mean Angular Deviation
-            'BC': ('BC', 'uint8'),      # Band Contrast
+            'BC': ('BC', 'float32'),      # Band Contrast
             'BS': ('BS', 'uint8'),      # Band Slope
         }
 
@@ -578,6 +578,46 @@ class DICDataLoader(object):
         data = pd.read_table(str(filePath), delimiter='\t', skiprows=1,
                              header=None)
        
+        # x and y coordinates
+        loadedData = np.array(data)
+
+        return loadedData
+    
+    @staticmethod
+    def loadNcorrImageData(fileName: str,dicNumber: int,fileDir: str = "") -> np.ndarray:
+        """ A .mat file from ncorr containing a 2D image
+
+        Parameters
+        ----------
+        fileName
+            File name.
+        fileDir
+            Path to file.
+        dicNumber
+            DIC number to load, as ncorr saves all DIC data in one file.
+        Returns
+        -------
+        np.ndarray
+            Array of data.
+
+        """
+        filePath = pathlib.Path(fileDir) / pathlib.Path(fileName)
+        if not filePath.is_file():
+            raise FileNotFoundError("Cannot open file {}".format(filePath))
+
+        
+        # dic_data.data_dic_save.displacement(n).plot_corrcoef_dic 
+        with h5py.File(str(filePath), 'r') as f:
+            # Load the data from the HDF5 file
+            displacements_group = f["data_dic_save"]["displacements"]["plot_corrcoef_dic"]
+            
+            obj_ref = displacements_group[dicNumber-1][0]  # Access the object reference
+          
+            # Dereference the object reference to get the actual data
+            data = f[obj_ref][:]
+            # Convert to a NumPy array
+            data = np.array(data)
+
         # x and y coordinates
         loadedData = np.array(data)
 
